@@ -42,7 +42,7 @@ extern int tofStartReadDist(void);
 
 //
 // Read the distance, this function must be called after 200ms or more
-// from starting reading
+// from the start of reading
 //
 
 extern int tofReadDistanceAsync(void);
