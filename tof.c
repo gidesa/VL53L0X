@@ -12,6 +12,11 @@
 // My version is an attempt to simplify that code and 
 // create a generic C library for Linux
 //
+//
+// 2/2021 - Giandomenico De Sanctis  gidesay@yahoo.com
+// -  Added functions tofStartReadDist,  tofReadDistanceAsync that 
+//    return soon to caller without waiting cycles
+
 
 #include <unistd.h>
 #include <stdio.h>
@@ -775,10 +780,9 @@ int i;
   return 1;
 } /* initSensor() */
 
-uint16_t readRangeContinuousMillimeters(void)
+uint16_t  waitInterrupt(void)
 {
 int iTimeout = 0;
-uint16_t range;
 
   while ((readReg(RESULT_INTERRUPT_STATUS) & 0x07) == 0)
   {
@@ -788,7 +792,15 @@ uint16_t range;
     {
       return -1;
     }
-  }
+  };
+  return 0;
+}
+
+
+uint16_t readRangeContinuousMillimeters(void)
+{
+uint16_t range;
+  if (waitInterrupt() == -1) { return -1; };
 
   // assumptions: Linearity Corrective Gain is 1000 (default);
   // fractional ranging is not enabled
@@ -798,13 +810,29 @@ uint16_t range;
 
   return range;
 }
-//
-// Read the current distance in mm
-//
-int tofReadDistance(void)
-{
-int iTimeout;
 
+//
+// Read the current distance in mm,
+// the caller is responsible to wait 200ms or more after start reading
+// before calling this function
+//
+uint16_t readRangeContMillimAsync(void)
+{
+uint16_t range;
+  // assumptions: Linearity Corrective Gain is 1000 (default);
+  // fractional ranging is not enabled
+  range = readReg16(RESULT_RANGE_STATUS + 10);
+
+  writeReg(SYSTEM_INTERRUPT_CLEAR, 0x01);
+
+  return range;
+}
+
+//
+// Start a reading and return soon to caller
+//
+int tofStartReadDist(void)
+{
   writeReg(0x80, 0x01);
   writeReg(0xFF, 0x01);
   writeReg(0x00, 0x00);
@@ -814,7 +842,19 @@ int iTimeout;
   writeReg(0x80, 0x00);
 
   writeReg(SYSRANGE_START, 0x01);
+  
+  return 0;
+}
 
+//
+// Read the current distance in mm
+//
+int tofReadDistance(void)
+{
+int iTimeout;
+
+  tofStartReadDist(); 
+  
   // "Wait until start bit has been cleared"
   iTimeout = 0;
   while (readReg(SYSRANGE_START) & 0x01)
@@ -828,8 +868,12 @@ int iTimeout;
   }
 
   return readRangeContinuousMillimeters();
-
 } /* tofReadDistance() */
+
+int tofReadDistanceAsync(void)
+{
+  return readRangeContMillimAsync();
+}
 
 int tofGetModel(int *model, int *revision)
 {
