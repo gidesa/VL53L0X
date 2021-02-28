@@ -1,5 +1,20 @@
 TOF - VL53L0X Time of Flight distance sensor library
 
+Here there is a modified version of very good Larry Bank's VL53L0X library.
+My version has functions to work in non blocking mode.
+I added two new functions: 
+- tofStartReadDist is called to initiate the reading,
+and return soon to caller; 
+- tofReadDistanceAsync must be called after a delay of 200 ms or more, this delay
+is need from device to complete the reading in the worst case.
+With the two functions a caller can use the library in a non blocking mode,
+doing some other processing in the delay. This could be required in realt-time
+programs.
+Included an example to use the new functions, mainAsync.c .
+And a script to compile as a shared library, libVl53l0x.so .
+
+From Larry Bank original version:
+
 This code is based on the Pololu Arduino library (see LICENSE.txt)
 My aim with this project was to simplify that code and port it to Linux
 for use on boards like the Raspberry Pi. The problem with ST Micro's part
