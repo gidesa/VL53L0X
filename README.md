@@ -7,6 +7,7 @@ I added two new functions:
 and return soon to caller; 
 - tofReadDistanceAsync must be called after a delay of 200 ms or more, this delay
 is need from device to complete the reading in the worst case.
+
 With the two functions a caller can use the library in a non blocking mode,
 doing some other processing in the delay. This could be required in realt-time
 programs.
